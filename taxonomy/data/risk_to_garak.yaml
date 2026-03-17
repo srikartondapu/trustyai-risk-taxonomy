@@ -1,0 +1,210 @@
+# TrustyAI Risk Taxonomy - Risk to Garak Probe Mappings
+#
+# Maps each risk to Garak probes that test for it.
+#
+# Usage:
+#   Forward: "I want to test for toxicity" → run these probes
+#   Reverse: "Garak found dan.DanInTheWild vulnerability" → that's atlas-jailbreaking
+#
+# Probe names are from `garak --list_probes` output (verified).
+# garak_tags are from probe source code (AVID/OWASP/payload tags).
+# garak_tier values: OF_CONCERN (critical), COMPETE_WITH_SOTA (standard), INFORMATIONAL (context-dependent).
+# Priority and coverage classifications are estimates — validate after running scans.
+
+version: "0.2.0"
+last_updated: "2026-03-11"
+
+risk_garak_mappings:
+
+  # ============================================================
+  # Toxicity -> Garak Probes
+  # ============================================================
+  - risk_id: atlas-spreading-toxicity
+    probes:
+      - probe: realtoxicityprompts.RTPBlank
+        priority: HIGH
+        coverage: comprehensive
+        description: "RealToxicityPrompts - blank prompt continuation for toxicity"
+        garak_tier: OF_CONCERN
+        garak_tags: [avid-effect:ethics:E0301, quality:Behavioral:ContentSafety:Toxicity, payload:unwanted]
+
+      - probe: lmrc.Profanity
+        priority: HIGH
+        coverage: specific_aspect
+        description: "Tests for profane language generation"
+        garak_tier: INFORMATIONAL
+        garak_tags: [risk-cards:lmrc:profanity, avid-effect:ethics:E0301, quality:Behavioral:ContentSafety:Profanity, payload:unwanted:profanity]
+
+      - probe: lmrc.Bullying
+        priority: MEDIUM
+        coverage: specific_aspect
+        description: "Tests for bullying content generation"
+        garak_tier: COMPETE_WITH_SOTA
+        garak_tags: [risk-cards:lmrc:bullying, avid-effect:ethics:E0301, quality:Behavioral:ContentSafety:Violence, payload:unwanted:violence]
+
+      - probe: lmrc.SlurUsage
+        priority: MEDIUM
+        coverage: specific_aspect
+        description: "Tests for slur usage in outputs"
+        garak_tier: COMPETE_WITH_SOTA
+        garak_tags: [risk-cards:lmrc:slur_usage, avid-effect:ethics:E0301, quality:Behavioral:ContentSafety:HateHarassment, payload:unwanted:hatespeech]
+
+      - probe: continuation.ContinueSlursReclaimedSlurs
+        priority: LOW
+        coverage: specific_aspect
+        description: "Tests continuation behavior with slurs"
+        garak_tier: COMPETE_WITH_SOTA
+        garak_tags: [avid-effect:ethics:E0301, owasp:llm01, quality:Behavioral:ContentSafety:HateHarassment, payload:unwanted:hatespeech]
+
+  # ============================================================
+  # Jailbreaking -> Garak Probes
+  # ============================================================
+  - risk_id: atlas-jailbreaking
+    probes:
+      - probe: dan.DanInTheWild
+        priority: HIGH
+        coverage: comprehensive
+        description: "Real-world DAN jailbreak prompts collected from the wild"
+        garak_tier: OF_CONCERN
+        garak_tags: [avid-effect:security:S0403, owasp:llm01, quality:Security:PromptStability, payload:jailbreak]
+
+      - probe: dan.AutoDANCached
+        priority: HIGH
+        coverage: comprehensive
+        description: "Automated DAN-style jailbreak generation"
+        garak_tier: COMPETE_WITH_SOTA
+        garak_tags: [avid-effect:security:S0403, owasp:llm01, quality:Security:PromptStability, payload:jailbreak]
+
+      - probe: dan.Ablation_Dan_11_0
+        priority: MEDIUM
+        coverage: specific_aspect
+        description: "DAN 11.0 ablation study prompts"
+        garak_tier: COMPETE_WITH_SOTA
+        garak_tags: [avid-effect:security:S0403, owasp:llm01, quality:Security:PromptStability, payload:jailbreak]
+
+      - probe: tap.TAPCached
+        priority: HIGH
+        coverage: comprehensive
+        description: "Tree of Attacks with Pruning - automated jailbreak"
+        garak_tier: COMPETE_WITH_SOTA
+        garak_tags: [avid-effect:security:S0403, quality:Security:PromptStability, payload:jailbreak]
+
+      - probe: suffix.GCGCached
+        priority: MEDIUM
+        coverage: specific_aspect
+        description: "Greedy Coordinate Gradient adversarial suffixes"
+        garak_tier: COMPETE_WITH_SOTA
+        garak_tags: [avid-effect:security:S0403, avid-effect:performance:P0204, quality:Security:PromptStability, payload:jailbreak]
+
+      - probe: dra.DRA
+        priority: MEDIUM
+        coverage: specific_aspect
+        description: "Disguise and Reconstruction Attack"
+        garak_tier: OF_CONCERN
+        garak_tags: [avid-effect:security:S0403, owasp:llm01, quality:Security:PromptStability, payload:jailbreak]
+
+  # ============================================================
+  # PII Leakage -> Garak Probes
+  # ============================================================
+  - risk_id: atlas-exposing-personal-information
+    probes:
+      - probe: leakreplay.GuardianCloze
+        priority: HIGH
+        coverage: comprehensive
+        description: "Cloze-style prompts to extract memorized training data"
+        garak_tier: COMPETE_WITH_SOTA
+        garak_tags: [avid-effect:security:S0301, owasp:llm06, owasp:llm10, quality:Security:ExtractionInversion, payload:leak:training]
+
+      - probe: leakreplay.GuardianComplete
+        priority: HIGH
+        coverage: comprehensive
+        description: "Completion-style prompts to extract memorized training data"
+        garak_tier: COMPETE_WITH_SOTA
+        garak_tags: [avid-effect:security:S0301, owasp:llm06, owasp:llm10, quality:Security:ExtractionInversion, payload:leak:training]
+
+      - probe: web_injection.ColabAIDataLeakage
+        priority: MEDIUM
+        coverage: specific_aspect
+        description: "Tests for data leakage via web injection patterns"
+        garak_tier: OF_CONCERN
+        garak_tags: [avid-effect:security:S0301, owasp:llm02, owasp:llm06, payload:leak:chat, quality:Security:ExtractionInversion]
+
+      - probe: web_injection.MarkdownImageExfil
+        priority: MEDIUM
+        coverage: specific_aspect
+        description: "Tests for data exfiltration via markdown image injection"
+        garak_tier: OF_CONCERN
+        garak_tags: [avid-effect:security:S0301, owasp:llm02, owasp:llm06, payload:leak:chat, quality:Security:ExtractionInversion]
+
+  # ============================================================
+  # Decision Bias -> Garak Probes
+  # ============================================================
+  - risk_id: atlas-decision-bias
+    probes:
+      - probe: lmrc.Sexualisation
+        priority: HIGH
+        coverage: specific_aspect
+        description: "Tests for sexualization bias in outputs"
+        garak_tier: COMPETE_WITH_SOTA
+        garak_tags: [risk-cards:lmrc:sexualisation, avid-effect:ethics:E0301, quality:Behavioral:ContentSafety:Sexual, payload:unwanted:sexual]
+
+      - probe: lmrc.Deadnaming
+        priority: MEDIUM
+        coverage: specific_aspect
+        description: "Tests for deadnaming in outputs"
+        garak_tier: COMPETE_WITH_SOTA
+        garak_tags: [risk-cards:lmrc:deadnaming, avid-effect:ethics:E0302, avid-effect:performance:P0401]
+
+      - probe: continuation.ContinueSlursReclaimedSlurs
+        priority: MEDIUM
+        coverage: specific_aspect
+        description: "Tests for biased continuation with identity-related terms"
+        garak_tier: COMPETE_WITH_SOTA
+        garak_tags: [avid-effect:ethics:E0301, owasp:llm01, quality:Behavioral:ContentSafety:HateHarassment, payload:unwanted:hatespeech]
+
+  # ============================================================
+  # Hallucination -> Garak Probes
+  # ============================================================
+  - risk_id: atlas-hallucination
+    probes:
+      - probe: packagehallucination.Python
+        priority: HIGH
+        coverage: specific_aspect
+        description: "Tests if model invents non-existent Python packages"
+        garak_tier: OF_CONCERN
+        garak_tags: [owasp:llm09, owasp:llm02, quality:Robustness:GenerativeMisinformation, payload:malicious:badcode]
+
+      - probe: packagehallucination.JavaScript
+        priority: HIGH
+        coverage: specific_aspect
+        description: "Tests if model invents non-existent JavaScript packages"
+        garak_tier: OF_CONCERN
+        garak_tags: [owasp:llm09, owasp:llm02, quality:Robustness:GenerativeMisinformation, payload:malicious:badcode]
+
+      - probe: snowball.GraphConnectivity
+        priority: MEDIUM
+        coverage: specific_aspect
+        description: "Tests for logical reasoning hallucination"
+        garak_tier: COMPETE_WITH_SOTA
+        garak_tags: [avid-effect:performance:P0204, owasp:llm09, quality:Robustness:GenerativeMisinformation, payload:hallucination]
+
+      - probe: misleading.FalseAssertion
+        priority: MEDIUM
+        coverage: specific_aspect
+        description: "Tests if model agrees with false assertions"
+        garak_tier: COMPETE_WITH_SOTA
+        garak_tags: [avid-effect:performance:P0204, owasp:llm09, quality:Robustness:GenerativeMisinformation, payload:hallucination]
+
+      - probe: packagehallucination.Rust
+        priority: LOW
+        coverage: specific_aspect
+        description: "Tests if model invents non-existent Rust packages"
+        garak_tier: OF_CONCERN
+        garak_tags: [owasp:llm09, owasp:llm02, quality:Robustness:GenerativeMisinformation, payload:malicious:badcode]
+
+      - probe: packagehallucination.Ruby
+        priority: LOW
+        coverage: specific_aspect
+        description: "Tests if model invents non-existent Ruby packages"
+        garak_tier: OF_CONCERN
+        garak_tags: [owasp:llm09, owasp:llm02, quality:Robustness:GenerativeMisinformation, payload:malicious:badcode]

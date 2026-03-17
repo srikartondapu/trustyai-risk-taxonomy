@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trustyai-risk-taxonomy"
+version = "0.1.0"
+description = "Structured risk taxonomy connecting AI safety tools through a single queryable data layer"
+requires-python = ">=3.10"
+dependencies = [
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+demo = [
+    "streamlit",
+    "pandas",
+    "plotly",
+]
+regenerate = [
+    "ai-atlas-nexus>=1.2.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["taxonomy*"]

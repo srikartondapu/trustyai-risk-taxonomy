@@ -1,0 +1,138 @@
+version: 0.2.0
+last_updated: '2026-03-11'
+risk_mitigation_mappings:
+- risk_id: atlas-spreading-toxicity
+  mitigation_type: content_filtering
+  description: Filter or flag toxic, hateful, abusive, or profane content
+  detectors:
+  - id: toxicity-detector-hf
+    model_name: martin-ha/toxic-comment-model
+    model_type: huggingface_classifier
+    api_protocol: kserve_v1
+    inference_endpoint: http://<detector-service>.<namespace>.svc.cluster.local:8080/v1/models/toxicity-detector:predict
+    threshold: 0.4
+    safe_labels:
+    - 0
+    timeout: 30
+    effectiveness_score: 1.0
+    deployment_status: active
+  - id: granite-guardian-hap
+    model_name: ibm/granite-guardian-hap-38m
+    model_type: granite_guardian
+    api_protocol: kserve_v1
+    inference_endpoint: https://<detector-service>.<namespace>.svc.cluster.local:8443/v1/models/guardrails-detector-ibm-guardian:predict
+    threshold: 0.5
+    safe_labels:
+    - 0
+    timeout: 30
+    deployment_status: inactive
+  - id: nemo-self-check-input
+    model_name: self_check_input
+    model_type: llm_self_check
+    api_protocol: nemo_builtin
+    description: LLM-based input safety check — uses the main LLM to evaluate if input
+      is safe
+    nemo_library: self_check/input_check
+    deployment_status: available
+  - id: nemo-content-safety
+    model_name: nvidia/llama-3.1-nemoguard-8b-content-safety
+    model_type: nemoguard_classifier
+    api_protocol: nemo_builtin
+    description: Dedicated NeMoGuard safety model for content policy violation detection
+    nemo_library: content_safety
+    deployment_status: available
+- risk_id: atlas-jailbreaking
+  mitigation_type: jailbreak_detection
+  description: Detect and block jailbreak attempts before they reach the model
+  detectors:
+  - id: jailbreak-detector-hf
+    model_name: jackhhao/jailbreak-classifier
+    model_type: huggingface_classifier
+    api_protocol: kserve_v1
+    inference_endpoint: http://<detector-service>.<namespace>.svc.cluster.local:8080/v1/models/jailbreak-detector:predict
+    threshold: 0.5
+    safe_labels:
+    - 0
+    timeout: 30
+    effectiveness_score: 0.8856
+    deployment_status: active
+  - id: nemo-jailbreak-heuristics
+    model_name: jailbreak_detection_heuristics
+    model_type: heuristic
+    api_protocol: nemo_builtin
+    description: Perplexity-based jailbreak detection using length-per-perplexity
+      and prefix-suffix thresholds. Runs locally without external model.
+    nemo_library: jailbreak_detection/heuristics
+    deployment_status: available
+  - id: nemo-self-check-input-jailbreak
+    model_name: self_check_input
+    model_type: llm_self_check
+    api_protocol: nemo_builtin
+    description: LLM-based input safety check that can detect jailbreak attempts
+    nemo_library: self_check/input_check
+    deployment_status: available
+- risk_id: atlas-exposing-personal-information
+  mitigation_type: pii_detection
+  description: Detect and redact personal identifiable information in outputs
+  detectors:
+  - id: pii-detector-hf
+    model_name: iiiorg/piiranha-v1-detect-personal-information
+    model_type: huggingface_token_classifier
+    api_protocol: kserve_v1
+    inference_endpoint: http://<detector-service>.<namespace>.svc.cluster.local:8080/v1/models/pii-detector:predict
+    threshold: 0.15
+    safe_labels:
+    - 17
+    timeout: 30
+    effectiveness_score: 1.0
+    deployment_status: active
+  - id: nemo-sensitive-data-detection
+    model_name: presidio_analyzer
+    model_type: ner_library
+    api_protocol: nemo_builtin
+    description: Presidio-based PII detection and redaction using spaCy NLP. Detects
+      names, emails, credit cards, SSN, and 21+ entity types. Runs locally inside
+      NeMo.
+    nemo_library: sensitive_data_detection
+    deployment_status: available
+- risk_id: atlas-decision-bias
+  mitigation_type: bias_detection
+  description: Detect biased or discriminatory content in model outputs
+  detectors: []
+  gap_analysis:
+    status: no_detector_available
+    severity: medium
+    notes: Real coverage gap — no NeMo built-in bias detector exists and no dedicated
+      detector deployed. Bias detection requires either a dedicated classifier or
+      prompt-based evaluation. Candidates include Granite Guardian social-bias dimension
+      and LlamaGuard policy-based checks. Garak probes (lmrc.Deadnaming, lmrc.Sexualisation)
+      can identify vulnerabilities but no real-time guardrail is available.
+- risk_id: atlas-hallucination
+  mitigation_type: hallucination_detection
+  description: Detect factually incorrect or fabricated content
+  detectors:
+  - id: nemo-self-check-hallucination
+    model_name: self_check_hallucination
+    model_type: llm_consistency_check
+    api_protocol: nemo_builtin
+    description: Multi-completion consistency check (SelfCheckGPT). Generates diverse
+      completions and compares for factual consistency. Detects hallucination without
+      external knowledge base.
+    nemo_library: hallucination
+    deployment_status: available
+  - id: nemo-self-check-facts
+    model_name: self_check_facts
+    model_type: llm_fact_verification
+    api_protocol: nemo_builtin
+    description: LLM-based fact verification against evidence chunks. Compares bot
+      output against retrieved context for RAG pipelines. Blocks output if accuracy
+      score < 0.5.
+    nemo_library: self_check/facts
+    deployment_status: available
+  gap_analysis:
+    status: baseline_available
+    severity: high
+    notes: NeMo built-in hallucination detection available (self-check consistency
+      and fact verification) but no dedicated detector deployed or measured. For production,
+      consider deploying Granite Guardian groundedness dimension as a dedicated detector
+      with measured effectiveness.

@@ -1,0 +1,120 @@
+# TrustyAI Risk Taxonomy - Risk to Evaluation Mappings
+#
+# Maps each risk to benchmarks for measuring model behavior.
+#
+# Two evaluation providers:
+#   1. lm_evaluation_harness: Standard benchmarks (pip install lm-eval[api])
+#   2. garak: Vulnerability probes run as evaluations
+#
+# The taxonomy drives evaluation selection:
+#   "I found toxicity risk" -> "Run these benchmarks to measure severity"
+#   "I deployed a guardrail" -> "Run these again to measure improvement"
+#
+# Task names verified against lm-eval 0.4.11 task registry (2026-02-23).
+# Jailbreak has no lm-eval task — uses Garak probes as primary eval.
+
+version: "0.2.0"
+last_updated: "2026-02-23"
+
+risk_evaluation_mappings:
+
+  # ============================================================
+  # Toxicity Evaluations
+  # ============================================================
+  - risk_id: atlas-spreading-toxicity
+    evaluations:
+      - id: toxigen
+        provider: lm_evaluation_harness
+        task_name: toxigen
+        priority: HIGH
+        description: "ToxiGen - machine-generated dataset for implicit toxic language detection"
+        config:
+          num_fewshot: 0
+          limit: 500
+
+      - id: realtoxicityprompts
+        provider: lm_evaluation_harness
+        task_name: realtoxicityprompts
+        priority: MEDIUM
+        description: "RealToxicityPrompts - measures toxicity in model completions. Requires PERSPECTIVE_API_KEY env var (Google Perspective API)."
+        requires_api_key: PERSPECTIVE_API_KEY
+        config:
+          num_fewshot: 0
+          limit: 500
+
+      - id: garak-toxicity-suite
+        provider: garak
+        task_name: realtoxicityprompts.RTPBlank,lmrc.Bullying,lmrc.SlurUsage
+        priority: HIGH
+        description: "Garak toxicity probe suite"
+
+  # ============================================================
+  # Jailbreak Evaluations
+  # No lm-eval task exists for jailbreak (harmbench is not in lm-eval).
+  # Garak probes are the primary evaluation method for this risk.
+  # ============================================================
+  - risk_id: atlas-jailbreaking
+    evaluations:
+      - id: garak-jailbreak-suite
+        provider: garak
+        task_name: dan.DanInTheWild,tap.TAPCached,suffix.GCGCached
+        priority: HIGH
+        description: "Garak jailbreak probe suite - primary eval for jailbreak risk"
+
+  # ============================================================
+  # PII Leakage Evaluations
+  # ============================================================
+  - risk_id: atlas-exposing-personal-information
+    evaluations:
+      - id: garak-pii-suite
+        provider: garak
+        task_name: leakreplay.GuardianCloze,leakreplay.GuardianComplete
+        priority: HIGH
+        description: "Garak PII extraction probe suite"
+
+  # ============================================================
+  # Decision Bias Evaluations
+  # ============================================================
+  - risk_id: atlas-decision-bias
+    evaluations:
+      - id: bbq
+        provider: lm_evaluation_harness
+        task_name: bbq
+        priority: HIGH
+        description: "BBQ - Bias Benchmark for QA, tests social biases"
+        config:
+          num_fewshot: 0
+          limit: 500
+
+      - id: crows_pairs
+        provider: lm_evaluation_harness
+        task_name: crows_pairs_english
+        priority: HIGH
+        description: "CrowS-Pairs - measures stereotypical bias"
+        config:
+          num_fewshot: 0
+
+      - id: garak-bias-suite
+        provider: garak
+        task_name: lmrc.Sexualisation,lmrc.Deadnaming
+        priority: MEDIUM
+        description: "Garak bias probe suite"
+
+  # ============================================================
+  # Hallucination Evaluations
+  # ============================================================
+  - risk_id: atlas-hallucination
+    evaluations:
+      - id: truthfulqa
+        provider: lm_evaluation_harness
+        task_name: truthfulqa_mc2
+        priority: HIGH
+        description: "TruthfulQA - measures truthfulness of model responses"
+        config:
+          num_fewshot: 0
+
+      - id: garak-hallucination-suite
+        provider: garak
+        task_name: packagehallucination.Python,packagehallucination.JavaScript,snowball.GraphConnectivity
+        priority: HIGH
+        description: "Garak hallucination probe suite"

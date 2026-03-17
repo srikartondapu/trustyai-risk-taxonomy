@@ -1,0 +1,103 @@
+# TrustyAI Risk Taxonomy - Operational Risk Dimensions
+#
+# These are the risk dimensions we actively monitor and mitigate.
+# Each dimension maps to a primary Atlas Nexus risk and has
+# operational data (Garak probes, detectors, evaluations) in
+# the corresponding operational files.
+#
+# Dimensions are derived from Atlas Nexus risk categories where
+# we have verified Garak probes and/or deployed detectors.
+#
+# The guardrail optimizer consumes these dimensions via exported CSVs.
+
+version: "0.1.0"
+last_updated: "2026-02-09"
+
+dimensions:
+
+  # ============================================================
+  # 1. Harmful Content / Toxicity
+  # Status: COVERED — 2 detectors (1 active, 1 inactive)
+  # ============================================================
+  - id: harmful_content
+    name: Harmful Content / Toxicity
+    category: content_safety
+    description: "Model generates toxic, hateful, abusive, or profane content"
+    primary_risk_id: atlas-spreading-toxicity
+    has_detector: true
+    related_risk_ids:
+      - atlas-harmful-output
+      - atlas-toxic-output
+      - atlas-harmful-code-generation
+      - nist-dangerous-violent-or-hateful-content
+      - nist-obscene-degrading-and-or-abusive-content
+      - granite-guardian-harm
+      - granite-profanity
+      - shieldgemma-hate-speech
+
+  # ============================================================
+  # 2. Jailbreak Attacks
+  # Status: COVERED — 1 detector (active)
+  # ============================================================
+  - id: jailbreak
+    name: Jailbreak Attacks
+    category: security
+    description: "Model safety constraints circumvented through adversarial prompts"
+    primary_risk_id: atlas-jailbreaking
+    has_detector: true
+    related_risk_ids:
+      - atlas-prompt-injection
+      - granite-jailbreak
+      - llm01-prompt-injection
+
+  # ============================================================
+  # 3. PII Leakage
+  # Status: COVERED — 1 detector (active)
+  # ============================================================
+  - id: pii_leakage
+    name: PII Leakage
+    category: privacy
+    description: "Model exposes personally identifiable information"
+    primary_risk_id: atlas-exposing-personal-information
+    has_detector: true
+    related_risk_ids:
+      - atlas-personal-information-in-prompt
+      - atlas-personal-information-in-data
+      - atlas-data-privacy-rights
+      - atlas-reidentification
+      - nist-data-privacy
+      - llm022025-sensitive-information-disclosure
+
+  # ============================================================
+  # 4. Bias and Fairness
+  # Status: GAP — no detector deployed
+  # ============================================================
+  - id: bias_fairness
+    name: Bias and Fairness
+    category: fairness
+    description: "Model exhibits discriminatory behavior across demographic groups"
+    primary_risk_id: atlas-decision-bias
+    has_detector: false
+    related_risk_ids:
+      - atlas-data-bias
+      - atlas-output-bias
+      - atlas-unrepresentative-data
+      - nist-harmful-bias-or-homogenization
+      - granite-social-bias
+      - shieldgemma-hate-speech
+
+  # ============================================================
+  # 5. Hallucination
+  # Status: GAP — no detector deployed
+  # ============================================================
+  - id: hallucination
+    name: Hallucination
+    category: reliability
+    description: "Model generates factually incorrect or fabricated information"
+    primary_risk_id: atlas-hallucination
+    has_detector: false
+    related_risk_ids:
+      - atlas-function-calling-hallucination-agentic
+      - nist-confabulation
+      - granite-groundedness
+      - granite-function-call

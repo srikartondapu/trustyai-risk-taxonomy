@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Virtual environment
+riskenv/
+
+# macOS
+.DS_Store
+
+# Garak scan data (large files, regenerable)
+*.report.jsonl
+*.hitlog.jsonl
+*.report.html
+
+# Raw Atlas Nexus export (regenerable via extract_atlas_data.py)
+atlas_nexus_full_export.json
+
+# Generated optimizer CSVs
+optimizer_data/
+
+# Generated eval results and job manifests
+eval_results/
+eval_jobs/
+
+# Separate repos
+guardrail-optimizer/
+
+# Development scripts (moved to _dev/)
+_dev/
+
+# Binary files
+*.pdf
+
+# IDE
+.vscode/
+.idea/
+
+# Claude Code
+.claude/
